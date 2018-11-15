@@ -1,0 +1,33 @@
+.error-message {
+    color: darkred;
+}
+
+.index-button {
+    height: 21px;
+    border: none;
+}
+
+body {
+    padding-top: 15%;
+}
+
+.center-module {
+    margin: auto;
+    width: 50%;
+    text-align: center;
+    padding-bottom: 20px;
+}
+
+.index-input {
+    width: 400px;
+    border: 1px solid #555;
+}
+
+.index-depth-input {
+    width: 20px;
+    border: 1px solid #555;
+}
+
+.index-input:focus {
+    border: 3px solid #555;
+}

@@ -1,0 +1,30 @@
+.search-field {
+    width: 400px;
+    height: 20px;
+}
+
+.search-form {
+    padding: 10px 10px;
+    border-bottom: lightgrey 1px solid;
+}
+
+.site-name {
+    overflow: hidden;
+    font-size: 18px;
+}
+
+.site-url {
+    width: 520px;
+    color: rgb(0, 102, 33);
+    font-size: 14px;
+}
+
+.search-item {
+    width: 520px;
+    padding-bottom: 4px;
+}
+
+.search-button {
+    height: 25px;
+    border: none;
+}
