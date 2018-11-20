@@ -1,6 +1,7 @@
 package com.gclone.engine.service;
 
-import com.gclone.engine.model.MatchedQueryWithResult;
+import com.gclone.engine.exception.IndexFolderNotAccessibleException;
+import com.gclone.engine.model.SearchStatus;
 import com.gclone.engine.model.SearchResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +47,7 @@ public class SearchService {
         try {
             return DirectoryReader.open(dir);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot access index folder!");
+            throw new IndexFolderNotAccessibleException("Cannot access index folder! Nested exception message: " + e.getMessage());
         }
     }
 
@@ -69,7 +70,7 @@ public class SearchService {
         return result.toString().trim();
     }
 
-    public MatchedQueryWithResult getSuccessfulQuery(String queryString, int page) {
+    public SearchStatus doSearch(String queryString, int page) {
         boolean isPhrase = isPhrase(queryString);
 
         Query directQuery = buildDirectQuery(queryString);
@@ -78,15 +79,15 @@ public class SearchService {
         if (directQueryResult.totalHits == 0) {
             if (isPhrase) {
                 MultiPhraseQuery query = buildFuzzyPhraseQuery(queryString);
-                return new MatchedQueryWithResult(queryString, query, extractResult(query, page));
+                return new SearchStatus(query, extractResult(query, page));
             } else {
                 String stemmedQuery = stemWord(queryString);
                 Query query = buildFuzzyQuery(stemmedQuery);
-                return new MatchedQueryWithResult(stemmedQuery, query, extractResult(query, page));
+                return new SearchStatus(query, extractResult(query, page));
             }
         }
 
-        return new MatchedQueryWithResult(queryString, directQuery, directQueryResult);
+        return new SearchStatus(directQuery, directQueryResult);
     }
 
     public TopDocs extractResult(Query query, int page) {
@@ -154,7 +155,7 @@ public class SearchService {
             TokenStream stream = TokenSources.getAnyTokenStream(reader, docId, CONTENT, new StandardAnalyzer());
 
             String[] frags = getBestFragments(highlighter, text, stream);
-            SearchResult searchResult = new SearchResult(doc.get("url"), doc.get("title"), doc.get(CONTENT), frags[0]);
+            SearchResult searchResult = new SearchResult(doc.get("url"), doc.get("title"), frags[0]);
             results.add(searchResult);
         }
         return results;
@@ -168,7 +169,7 @@ public class SearchService {
         }
     }
 
-    public Map<ScoreDoc, Document> getIndexedDocuments(TopDocs topDocs, int page) throws IOException {
+    public Map<ScoreDoc, Document> getIndexedDocuments(TopDocs topDocs, int page) {
         int offset = getOffset(page);
 
         if (offset >= topDocs.scoreDocs.length) {
@@ -178,8 +179,22 @@ public class SearchService {
         int pageLength = (topDocs.scoreDocs.length - offset) >= RESULTS_PER_PAGE ? RESULTS_PER_PAGE : topDocs.scoreDocs.length % RESULTS_PER_PAGE;
         Map<ScoreDoc, Document> indexedDocuments = new HashMap<>();
 
-        for (int i = offset; i < offset + pageLength; i++) {
-            indexedDocuments.put(topDocs.scoreDocs[i], getIndexSearcher().doc(topDocs.scoreDocs[i].doc));
+        IndexSearcher indexSearcher = null;
+        try {
+            indexSearcher = getIndexSearcher();
+            for (int i = offset; i < offset + pageLength; i++) {
+                indexedDocuments.put(topDocs.scoreDocs[i], indexSearcher.doc(topDocs.scoreDocs[i].doc));
+            }
+        } catch (IOException e) {
+            log.error("Can't get documents");
+        } finally {
+            if (indexSearcher != null) {
+                try {
+                    indexSearcher.getIndexReader().close();
+                } catch (IOException e) {
+                    log.error("Error closing reader");
+                }
+            }
         }
 
         return indexedDocuments;

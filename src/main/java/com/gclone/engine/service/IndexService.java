@@ -1,5 +1,6 @@
 package com.gclone.engine.service;
 
+import com.gclone.engine.exception.IndexFolderNotAccessibleException;
 import com.gclone.engine.model.ScrapingResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ public class IndexService {
         if (!indexFolder.exists()) {
             boolean isDirectoryCreated = indexFolder.mkdir();
             if (!isDirectoryCreated) {
-                throw new Error("Cannot create directory for search index!");
+                throw new IndexFolderNotAccessibleException("Can't create folder for storing index under path: " + expectedIndexPath);
             } else {
                 log.info("Directory for index created under path '{}' ", expectedIndexPath);
             }
@@ -50,11 +51,9 @@ public class IndexService {
         document.add(new TextField("content", content, Field.Store.YES));
         document.add(new TextField("title", title, Field.Store.YES));
         document.add(new StringField("url", url, Field.Store.YES));
-        try {
-            IndexWriter indexWriter = getIndexWriter();
+        try (IndexWriter indexWriter = getIndexWriter()) {
             indexWriter.addDocument(document);
             indexWriter.commit();
-            indexWriter.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -3,7 +3,7 @@ package com.gclone.engine.controller;
 import com.gclone.engine.service.EngineService;
 import com.gclone.engine.service.SearchService;
 import com.gclone.engine.exception.PageNotFoundException;
-import com.gclone.engine.model.MatchedQueryWithResult;
+import com.gclone.engine.model.SearchStatus;
 import com.gclone.engine.model.SearchResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,11 +59,11 @@ public class SearchEngineController {
 
     @GetMapping("/search")
     public String search(@RequestParam(value="q") String query, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws IOException, ParseException {
-        MatchedQueryWithResult searchResult = searchService.getSuccessfulQuery(query, page);
+        SearchStatus searchStatus = searchService.doSearch(query, page);
 
-        if (searchResult.getResult().totalHits != 0) {
-            TopDocs topDocs = searchResult.getResult();
-            List<SearchResult> searchResults = searchService.getHitText(searchResult.getQuery(), topDocs, page);
+        if (searchStatus.getResult().totalHits != 0) {
+            TopDocs topDocs = searchStatus.getResult();
+            List<SearchResult> searchResults = searchService.getHitText(searchStatus.getQuery(), topDocs, page);
 
             long l = topDocs.totalHits / RESULTS_PER_PAGE;
             model.addAttribute("amountOfPages", l + (topDocs.totalHits % RESULTS_PER_PAGE > 0? 1 : 0));
