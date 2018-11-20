@@ -183,21 +183,26 @@ public class SearchService {
         try {
             indexSearcher = getIndexSearcher();
             for (int i = offset; i < offset + pageLength; i++) {
-                indexedDocuments.put(topDocs.scoreDocs[i], indexSearcher.doc(topDocs.scoreDocs[i].doc));
+                ScoreDoc document = topDocs.scoreDocs[i];
+                indexedDocuments.put(document, indexSearcher.doc(document.doc));
             }
         } catch (IOException e) {
             log.error("Can't get documents");
         } finally {
-            if (indexSearcher != null) {
-                try {
-                    indexSearcher.getIndexReader().close();
-                } catch (IOException e) {
-                    log.error("Error closing reader");
-                }
-            }
+            closeIndexReader(indexSearcher);
         }
 
         return indexedDocuments;
+    }
+
+    private void closeIndexReader(IndexSearcher indexSearcher) {
+        if (indexSearcher != null) {
+            try {
+                indexSearcher.getIndexReader().close();
+            } catch (IOException e) {
+                log.error("Error closing reader");
+            }
+        }
     }
 
     private int getOffset(int page) {
