@@ -8,6 +8,5 @@ import lombok.Data;
 public class SearchResult {
     private String url;
     private String title;
-    private String content;
     private String hitBlock;
 }

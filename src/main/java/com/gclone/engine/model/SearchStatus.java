@@ -7,8 +7,7 @@ import org.apache.lucene.search.TopDocs;
 
 @Data
 @AllArgsConstructor
-public class MatchedQueryWithResult {
-    private String queryString;
+public class SearchStatus {
     private Query query;
     private TopDocs result;
 }

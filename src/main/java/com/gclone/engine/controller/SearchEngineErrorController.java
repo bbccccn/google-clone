@@ -1,19 +1,21 @@
 package com.gclone.engine.controller;
 
-import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.stereotype.Controller;
+import com.gclone.engine.exception.IndexFolderNotAccessibleException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
 
-@Controller
-public class SearchEngineErrorController implements ErrorController {
+@ControllerAdvice
+public class SearchEngineErrorController {
 
-    @RequestMapping("/error")
-    public String displayError() {
-        return "error";
+    @ExceptionHandler(IndexFolderNotAccessibleException.class)
+    public ModelAndView handleIndexAccessError(IndexFolderNotAccessibleException e) {
+        return new ModelAndView("error").addObject("additionalErrorMessage", e.getMessage());
     }
 
-    @Override
-    public String getErrorPath() {
-        return "/error";
+    @RequestMapping("/error")
+    public String displayDefaultError() {
+        return "error";
     }
 }
